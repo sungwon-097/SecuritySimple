@@ -1,2 +1,61 @@
-server:
-  port: 8080
+security-properties:
+  cors:
+    origins:
+      - "https://test-url.co.kr"
+      - "http://localhost:3000"
+    methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+  no-auth-urls:
+    - "/login"
+    - "/register"
+  jwt:
+    access:
+      private-key: iPJU5kHFwHlk9SoGKkoujvgRVL7AOIIJZAA1+QcGRLU= # openssl rand -base64 32
+      public-key:
+      expiring-time: 30m
+      algorithm: HS256
+    refresh:
+      private-key: | # openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
+        -----BEGIN PRIVATE KEY-----
+        MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCQ51G/xTSsQSl9
+        JF2ri5W2dFlcRdLChcWcIG6YzpHAKpfG6Y7dfIDY6cUfmeKoamNqCJlDrPCtkqk2
+        t2WYsAqooBtHX0wJbhUbo2mmwhwWZjK5qN3a8NQucnVYzIoV06CJn03Ijwbj/hqo
+        6CeR5aLVNX1YdVyO6+/4xT7nJfKlwF/ckrQeFD+CjsAZqbhZ6s0tJfeC/8+/9saY
+        07X1WwVn4vYIhQGKE+zfdvTLJ1IT3quzR3VrLpouBixgMQ2jTRfj/+l6l8PyeBCP
+        zoTeN/qU3S99GGL/4aA3g+60cUVF2B/IpzFf8evEo/wSExtrvGxxXZ3nGqSdb98p
+        WbfeFmkpAgMBAAECggEAC+Lt0c1bhMXToXBaPrg0j8L7kZYos8xFaYk/iUloq1rT
+        GH4QOhr8ds62XOFCto4Dma8a43JMS/C78MEalGvcc/iuRCyNEDj3gkzlXciOhUfc
+        4V341PzsauL4vVAKA8BYavGmb81Lw2gUx8ZDeLRdpx+8KIV4EkFIbh/ACTYTsYT2
+        veHt2nXM5Xl8ZUIpOBfmUkmIeH58+PaZu8cafjbLtiodDGaLYvll3SnpPKJ0x9pp
+        9+FdYMIBpJ0PmUG2IQS7TKmiyHhilqN8jQleLIGNpSgxl7SMZW8246MFmoOwtKyB
+        3gIxjLSNruVfclgYABFWRnfgqFUK4lo53jfd0zcUAQKBgQDDogz7/wPHm/MLT0b2
+        esSeIcjIW9yXVJ5olaa4MEsgFqBOfcrdVw6JK56i6oJx8OmSS6VOfSZpz7zMvAiZ
+        GJMdAqkCZMR/ptoIOTnGoU/2fFzyDhDmoMAdeHNyjTs/DPJ3O+pFYNJudqpxjwp1
+        MKPDWChQG02GSzwXSMrJFYYGIwKBgQC9netBb6b5pk3nItXgnxiLgv1vDmzdZdd6
+        FvIGqM9sUb6xIu/dpppNS3mJ8l95jOaJS6pIWkB0n99ErHoCIE33ARq9FIgS0Wxb
+        XGT4n/eIWPwb6ipWkBoRFjYj47iJoiw0PU53ekLN5vjbqw5AgkVPlXyVZ7hk03uU
+        bW2Y7CPaQwKBgDfMDHADOAzCift7zP2X3mRLtnyO1sfCtruVk0uNWp/4VBiPAEFJ
+        BzhQXJqS0Em3MKctNCTCxSYAvhSWvM0NmUf47kNkgjb2W9FkoPnqIGho6AmRwXhF
+        +QVuyV6usWs2QiGH0TWge+RNrCdfaNgr20ln53eRkfbvll/9vvjDTsqJAoGANTyB
+        MH4Ig08N0DcXlVkVqxW70dJa/k35kW2fxf7fPao1v8XvUmvUJp9qIDDMXXQRxbpY
+        tLeiIRxBsyY5mx82xIKq3ytEiQQDSCNItgUzmjRhk/TKrkMHDoUN7kWhKgM+JeyQ
+        ezr4Rpbyh7oe5j2s+AsgT1Ivkx9NMv8GJkkmR8ECgYB/Wdh6MgVq7rUhr9H5DKiI
+        CdrXnTJe9YFHvQxaEWuUnYOjgwQoP3m9LQ7cO5126Af3AC7yFjpyeV3ejkeZlbd2
+        Jqh3vHRTr0ytAX/iVoY8tAlE10AYqu8RwdxD6DND2HJX4sSXNzMUMsCzK1iFNSN0
+        nZFmQvp0vj51FUG5LREaMg==
+        -----END PRIVATE KEY-----
+      public-key: | # openssl rsa -in private_key.pem -pubout -out public_key.pem
+        -----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkOdRv8U0rEEpfSRdq4uV
+        tnRZXEXSwoXFnCBumM6RwCqXxumO3XyA2OnFH5niqGpjagiZQ6zwrZKpNrdlmLAK
+        qKAbR19MCW4VG6NppsIcFmYyuajd2vDULnJ1WMyKFdOgiZ9NyI8G4/4aqOgnkeWi
+        1TV9WHVcjuvv+MU+5yXypcBf3JK0HhQ/go7AGam4WerNLSX3gv/Pv/bGmNO19VsF
+        Z+L2CIUBihPs33b0yydSE96rs0d1ay6aLgYsYDENo00X4//pepfD8ngQj86E3jf6
+        lN0vfRhi/+GgN4PutHFFRdgfyKcxX/HrxKP8EhMba7xscV2d5xqknW/fKVm33hZp
+        KQIDAQAB
+        -----END PUBLIC KEY-----
+      expiring-time: 7d
+      algorithm: RS512
