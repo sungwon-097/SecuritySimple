@@ -1,7 +1,7 @@
 package com.security.simple.filter;
 
-import com.security.simple.auth.AuthContext;
 import com.security.simple.auth.AuthUser;
+import com.security.simple.auth.BlackList;
 import com.security.simple.config.Properties;
 import com.security.simple.filter.exception.TokenException;
 import com.security.simple.utils.JwtTokenProvider;
@@ -9,16 +9,21 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.io.IOException;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class JwtAuthFilter implements Filter {
 
     private final JwtTokenProvider tokenProvider;
-    private final Properties properties;
+    private final Properties props;
+    private final Environment env;
+    private final BlackList BlackList;
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
@@ -29,30 +34,39 @@ public class JwtAuthFilter implements Filter {
 
         String path = request.getRequestURI();
 
-        if (properties.getNoAuthUrls() != null && properties.getNoAuthUrls().contains(path)) {
+        if (props.getNoAuthUrls().contains(path)) {
             chain.doFilter(request, response);
             return;
         }
 
         String token = request.getHeader("Authorization");
-        if (token != null) {
-            try {
-                AuthUser authUser = tokenProvider.getUserFromToken(token);
-                if (authUser != null) {
-                    AuthContext.setUser(authUser);
-                }
-            } catch (TokenException e) {
-                response.setStatus(e.getHttpStatus().value());
-                response.setContentType("application/json;charset=utf-8");
-                response.getWriter().write(generateErrorResponse(e.getMessage()));
-                return;
+
+        try {
+            if (token != null) {
+                throw new RuntimeException("Login required");
             }
+            if (env.matchesProfiles(props.getProdProfile())) {
+                AuthUser authUser = tokenProvider.getUserFromToken(token);
+                if (BlackList.isBlackList(authUser.getUsername())) {
+                    throw new RuntimeException("Blacklisted");
+                }
+            }
+            chain.doFilter(request, response);
+        } catch (TokenException e) {
+            log.debug("JwtAuthFilter : Error occurred during authentication, {}", e.getMessage());
+            generateResponse(response, e.getHttpStatus().value(), e.getMessage());
+        } catch (RuntimeException e) {
+            generateResponse(response, HttpServletResponse.SC_FORBIDDEN, e.getMessage());
         }
-        chain.doFilter(request, response);
-        AuthContext.clear();
     }
 
-    private String generateErrorResponse(String message) {
+    private void generateResponse(HttpServletResponse httpServletResponse, int errorCode, String message) throws IOException {
+        httpServletResponse.setStatus(errorCode);
+        httpServletResponse.setContentType("application/json;charset=utf-8");
+        httpServletResponse.getWriter().write(generateErrorMessage(message));
+    }
+
+    private String generateErrorMessage(String message) {
         return String.format("{\"result\": \"fail\", \"message\": \"%s\"}", message);
     }
 }
