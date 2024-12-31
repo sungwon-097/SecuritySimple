@@ -1,15 +1,18 @@
 package com.security.project.user;
 
+import com.security.project.user.Request.RegisterRequest;
+import com.security.project.user.Response.LoginResponse;
 import com.security.simple.utils.JwtTokenProvider;
 import com.security.simple.utils.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static com.security.project.user.Request.LoginRequest;
 
@@ -19,8 +22,7 @@ public class Controller {
 
     private final JwtTokenProvider provider;
     private final PasswordEncoder encoder;
-
-    static Map<String, String> refreshInfo = new HashMap<>();
+    private final UserRepository userRepository;
 
     /**
      * @brief
@@ -35,11 +37,25 @@ public class Controller {
             return ResponseEntity.badRequest().body("Invalid login info");
         }
 
-        var accessToken = provider.generateToken(request.username(), "user", null);
-        var refreshToken = provider.generateRefresh(request.username());
-        refreshInfo.put(refreshToken, request.username());
+        var accessToken = provider.generateToken(request.username(), "user", null)
+                .orElseThrow(RuntimeException::new);
+        var refreshToken = provider.generateRefresh(request.username())
+                .orElseThrow(RuntimeException::new);
 
-        return ResponseEntity.ok(new Response.LoginResponse(accessToken, refreshToken));
+        userRepository.updateRefreshByUser(request.username(), refreshToken);
+
+        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> signup(@RequestBody RegisterRequest request) throws URISyntaxException {
+
+        if (userRepository.existByUsername(request.username()))
+            throw new RuntimeException("Username is already in use");
+
+        userRepository.save(new User(request.username(), encoder.encode(request.password()), null));
+
+        return ResponseEntity.created(new URI("/users/" + request.username())).build();
     }
 
     /**
@@ -50,18 +66,35 @@ public class Controller {
      */
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody String refreshToken){
-        var currentUser = refreshInfo.get(refreshToken);
 
-        if (currentUser == null ) {
+        var currentUser = userRepository.findUserByToken(refreshToken);
+
+        if (currentUser.isEmpty()) {
             return ResponseEntity.badRequest().body("Refresh token does not exist");
         }
+
+        var username = currentUser.get().getUsername();
+        if (!currentUser.get().getRefreshToken().equals(refreshToken)){
+            userRepository.updateRefreshByUser(username, null);
+            return ResponseEntity.badRequest().body("Refresh token does not match");
+        }
+
         if (provider.isExpired(refreshToken)){
-            refreshInfo.remove(refreshToken);
+            userRepository.updateRefreshByUser(username, null);
             return ResponseEntity.badRequest().body("Refresh token expired");
         }
-        refreshInfo.put(refreshToken, currentUser);
 
-        return ResponseEntity.ok("Refresh completed");
+        userRepository.updateRefreshByUser(username, refreshToken);
+
+        var token = provider.generateToken(username, "user", null)
+                .orElseThrow(RuntimeException::new);
+
+        return ResponseEntity.ok(new LoginResponse(token, null));
+    }
+
+    @GetMapping("/test-url")
+    public ResponseEntity<?> testUrl(){
+        return ResponseEntity.ok("Authorization successful");
     }
 
     /**
@@ -70,7 +103,10 @@ public class Controller {
      * 2. Make sure your passwords match
      */
     private boolean verityUser(String username, String password) {
-        encoder.encode(password);
-        return true;
+
+        var currentUser = userRepository.findByUsername(username).orElseThrow(RuntimeException::new);
+        var originPassword = currentUser.getPassword();
+
+        return encoder.matches(password, originPassword);
     }
 }
