@@ -1,4 +1,3 @@
 rootProject.name = 'SecuritySimple'
 
-include 'auth'
-include 'project'
+include 'auth', 'project'
