@@ -18,16 +18,19 @@ public class DevAuthProviderArgumentResolver implements HandlerMethodArgumentRes
 
     @Override
     public AuthUser resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-
+        String token = webRequest.getHeader("Authorization");
+        if (token == null) {
+            return null;
+        }
         return new AuthUser() {
             @Override
             public String getUsername() {
-                return "test_user";
+                return "USER"+token;
             }
 
             @Override
             public String getRoles() {
-                return "";
+                return "USER";
             }
 
             @Override
