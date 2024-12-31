@@ -20,6 +20,7 @@ public class SecurityProperties implements Properties {
     private CorsInfo cors;
     private List<String> noAuthUrls;
     private Jwt jwt;
+    private String prodProfile = "prod";
 
     @Getter
     @Setter

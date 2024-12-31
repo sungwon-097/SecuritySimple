@@ -12,4 +12,6 @@ public interface Properties {
     List<String> getNoAuthUrls();
 
     Jwt getJwt();
+
+    String getProdProfile();
 }

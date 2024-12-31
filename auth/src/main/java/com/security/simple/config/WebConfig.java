@@ -15,13 +15,14 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final Environment environment;
     private final JwtTokenProvider provider;
+    private final Properties props;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        if (List.of("dev", "test").contains(environment.getActiveProfiles())){
-            resolvers.add(new DevAuthProviderArgumentResolver());
-        } else {
+        if (environment.matchesProfiles(props.getProdProfile())) {
             resolvers.add(new AuthProviderArgumentResolver(provider));
+        } else {
+            resolvers.add(new DevAuthProviderArgumentResolver());
         }
     }
 }
