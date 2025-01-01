@@ -3,19 +3,21 @@ package com.security.simple.utils;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.security.simple.auth.AuthUser;
 
+import java.util.Optional;
+
 public interface JwtTokenProvider {
 
     /**
      * @return Created token
      * @brief Create a jwt access token with the relevant information.
      */
-    String generateToken(String subject, String roles, String claims);
+    Optional<String> generateToken(String subject, String roles, String claims);
 
     /**
      * @return Created token
      * @brief Create a jwt refresh token with the relevant information.
      */
-    String generateRefresh(String subject);
+    Optional<String> generateRefresh(String subject);
 
     /**
      * @return Result of decrypting the token

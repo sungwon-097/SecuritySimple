@@ -10,24 +10,26 @@ import com.security.simple.auth.AuthUserImpl;
 import com.security.simple.config.Properties;
 import com.security.simple.config.SecurityProperties.Jwt.TokenConfig;
 import com.security.simple.filter.exception.*;
-import com.security.simple.utils.JwtAlgorithmFactory;
-import com.security.simple.utils.JwtTokenProvider;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Optional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProviderImpl implements JwtTokenProvider {
 
-    private final Properties properties;
+    private final Properties props;
 
     @Override
-    public String generateToken(String subject, String roles, String claims) {
-        TokenConfig access = properties.getJwt().getAccess();
+    public Optional<String> generateToken(String subject, String roles, String claims) {
+        TokenConfig access = props.getJwt().getAccess();
         try {
-            return JWT.create()
+            return Optional.of(JWT.create()
                     .withSubject(subject)
                     .withExpiresAt(new Date(System.currentTimeMillis() + (access.getExpiringTime().getSeconds() * 1000)))
                     .withClaim("roles", roles)
@@ -36,26 +38,28 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
                             access.getAlgorithm(),
                             access.getPrivateKey(),
                             access.getPublicKey())
-                    );
+                    ));
         } catch (Exception e) {
-            return null;
+            log.debug("JwtTokenProvider : Error occurred in generating access token, {}", e.getMessage());
+            return Optional.empty();
         }
     }
 
     @Override
-    public String generateRefresh(String subject) {
-        TokenConfig refresh = properties.getJwt().getRefresh();
+    public Optional<String> generateRefresh(String subject) {
+        TokenConfig refresh = props.getJwt().getRefresh();
         try {
-            return JWT.create()
+            return Optional.of(JWT.create()
                     .withSubject(subject)
                     .withExpiresAt(new Date(System.currentTimeMillis() + (refresh.getExpiringTime().getSeconds() * 1000)))
                     .sign(JwtAlgorithmFactory.createAlgorithm(
                             refresh.getAlgorithm(),
                             refresh.getPrivateKey(),
                             refresh.getPublicKey())
-                    );
+                    ));
         } catch (Exception e) {
-            return null;
+            log.debug("JwtTokenProvider : Error occurred in generating refresh token, {}", e.getMessage());
+            return Optional.empty();
         }
     }
 
@@ -66,7 +70,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
 
     @Override
     public DecodedJWT validateToken(String token) {
-        TokenConfig access = properties.getJwt().getAccess();
+        TokenConfig access = props.getJwt().getAccess();
         try {
             return JWT.require(JwtAlgorithmFactory.createAlgorithm(
                             access.getAlgorithm(),
@@ -91,6 +95,6 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
     @Override
     public boolean isExpired(String token) {
         DecodedJWT decode = JWT.decode(token);
-        return decode.getExpiresAt().after(new Date());
+        return decode.getExpiresAt().before(new Date());
     }
 }
