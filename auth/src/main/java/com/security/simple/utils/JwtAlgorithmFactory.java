@@ -12,11 +12,7 @@ import java.util.Base64;
 
 public class JwtAlgorithmFactory {
 
-        public static Algorithm createAlgorithm(JwtAlgorithm algorithm, String secretOrPrivateKey) throws Exception {
-            return createAlgorithm(algorithm, secretOrPrivateKey, null);
-        }
-
-        public static Algorithm createAlgorithm(JwtAlgorithm algorithm, String secretOrPrivateKey, String publicKey) throws Exception {
+    public static Algorithm createAlgorithm(JwtAlgorithm algorithm, String secretOrPrivateKey, String publicKey) throws Exception {
         return switch (algorithm) {
             case HS256 -> Algorithm.HMAC256(secretOrPrivateKey);
             case HS384 -> Algorithm.HMAC384(secretOrPrivateKey);
@@ -27,8 +23,8 @@ public class JwtAlgorithmFactory {
         };
     }
 
-    public static  RSAPublicKey getPublicKey(String key) throws Exception {
-        String publicKeyContent = key.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");
+    private static RSAPublicKey getPublicKey(String key) throws Exception {
+        String publicKeyContent = getKeyContent(key);
         byte[] encoded = Base64.getDecoder().decode(publicKeyContent);
 
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -37,9 +33,8 @@ public class JwtAlgorithmFactory {
         return (RSAPublicKey) keyFactory.generatePublic(keySpec);
     }
 
-    public static RSAPrivateKey getPrivateKey(String key) throws Exception {
-        String privateKeyContent = key.replaceAll("\\n", "").replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "");
-        privateKeyContent = privateKeyContent.replaceAll("\\s", "");
+    private static RSAPrivateKey getPrivateKey(String key) throws Exception {
+        String privateKeyContent = getKeyContent(key);
         byte[] encoded = Base64.getDecoder().decode(privateKeyContent);
 
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -48,4 +43,13 @@ public class JwtAlgorithmFactory {
         return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
     }
 
+    private static String getKeyContent(String key) {
+        return key.replaceAll("\\n", "")
+                .replaceAll("\\r", "")
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+    }
 }

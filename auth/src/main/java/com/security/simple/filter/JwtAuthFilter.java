@@ -42,7 +42,7 @@ public class JwtAuthFilter implements Filter {
         String token = request.getHeader("Authorization");
 
         try {
-            if (token != null) {
+            if (token == null) {
                 throw new RuntimeException("Login required");
             }
             if (env.matchesProfiles(props.getProdProfile())) {
