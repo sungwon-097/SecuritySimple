@@ -11,9 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import static com.security.project.user.Request.LoginRequest;
 
 @RestController
@@ -48,14 +45,14 @@ public class Controller {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> signup(@RequestBody RegisterRequest request) throws URISyntaxException {
+    public ResponseEntity<?> signup(@RequestBody RegisterRequest request) {
 
         if (userRepository.existByUsername(request.username()))
             throw new RuntimeException("Username is already in use");
 
         userRepository.save(new User(request.username(), encoder.encode(request.password()), null));
 
-        return ResponseEntity.created(new URI("/users/" + request.username())).build();
+        return ResponseEntity.ok().body("/users/" + request.username());
     }
 
     /**
